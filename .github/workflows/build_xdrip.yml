@@ -225,20 +225,14 @@ jobs:
       - name: Patch Match Tables
         run: find /usr/local/lib/ruby/gems -name table_printer.rb | xargs sed -i "" "/puts(Terminal::Table.new(params))/d"
 
-      # Patch Fastlane Match to not print tables
-      - name: Patch Match Tables
-        run: find /usr/local/lib/ruby/gems -name table_printer.rb | xargs sed -i "" "/puts(Terminal::Table.new(params))/d"
-      
-      - name: Fix Ruby and Bundler
+      - name: Fix Bundler
         run: |
-          gem uninstall bundler -a -x
-          gem install bundler:2.5.20
-          gem cleanup
+          # 禁用警告并重新安装 Bundler
+          gem uninstall bundler -a -x --force 2>/dev/null || true
+          gem install bundler:2.4.22
+          
+          # 验证
           bundler --version
-
-      # Install project dependencies
-      - name: Install Project Dependencies
-        run: bundle install
 
       # Install project dependencies
       - name: Install Project Dependencies
