@@ -220,6 +220,12 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           submodules: recursive
           ref: ${{ env.TARGET_BRANCH }}
+          
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3' # 或者 '3.4'，根据你的项目匹配
+          bundler-cache: false # 后面你自己有单独的 bundle install 步骤
 
       # Patch Fastlane Match to not print tables
       #- name: Patch Match Tables
