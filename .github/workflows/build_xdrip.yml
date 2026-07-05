@@ -221,28 +221,44 @@ jobs:
           submodules: recursive
           ref: ${{ env.TARGET_BRANCH }}
           
-      #- name: Set up Ruby
-        #uses: ruby/setup-ruby@v1
-        #with:
-          #ruby-version: '3.4' # 或者 '3.4'，根据你的项目匹配
-          #bundler-cache: false # 后面你自己有单独的 bundle install 步骤
-
-      # Patch Fastlane Match to not print tables
-      #- name: Patch Match Tables
-        #run: find /usr/local/lib/ruby/gems -name table_printer.rb | xargs sed -i "" "/puts(Terminal::Table.new(params))/d"
-
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2' # 使用兼容的Ruby版本
+          bundler-cache: true # 启用bundler缓存
+      - name: Patch Match Tables
+        run: find /usr/local/lib/ruby/gems -name table_printer.rb | xargs sed -i "" "/puts(Terminal::Table.new(params))/d"
+  
       - name: Fix Bundler
-        run: |
-          # 禁用警告并重新安装 Bundler
-          gem uninstall bundler -a -x --force 2>/dev/null || true
-          gem install bundler:2.4.22
-          
-          # 验证
-          bundler --version
+        run: gem uninstall bundler -a -x --force 2>/dev/null || true
 
-      # Install project dependencies
+          for version in 2.5.0 2.4.22 2.4.21; do
+            echo "Trying to install bundler version $version..."
+            if gem install bundler:$version; then
+              echo "Successfully installed bundler $version"
+              break
+            else
+              echo "Failed to install bundler $version, trying next version..."
+            fi
+          done
+          if ! command -v bundler &> /dev/null; then
+            echo "All specific versions failed, trying latest bundler..."
+            gem install bundler
+          fi
+          if command -v bundler &> /dev/null; then
+            bundler --version
+            echo "Bundler installation successful"
+          else
+            echo "Bundler installation failed"
+            exit 1
+          fi
       - name: Install Project Dependencies
-        run: bundle install
+        run: |
+          set -e # 确保任何错误都会终止脚本
+          bundle install --verbose
+          echo "Dependencies installed successfully"
+        env:
+          BUNDLE_LOG_LEVEL: debug
 
       # Sync the GitHub runner clock with the Windows time server (workaround as suggested in https://github.com/actions/runner/issues/2996)
       - name: Sync clock
